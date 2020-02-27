@@ -1,0 +1,92 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_UATCDPVMTestTemplate_name": {
+            "defaultValue": "UATCDPVMTestTemplate",
+            "type": "String"
+        },
+        "networkInterfaces_CDPUATNetworkInterface_externalid": {
+            "defaultValue": "/subscriptions/6a1a7290-7f6c-4bc0-ad5c-cfb9321813d3/resourceGroups/UATCDPTestTemplateRG2/providers/Microsoft.Network/networkInterfaces/CDPUATNetworkInterface",
+            "type": "String"
+        },
+        "disks_UATCDPVMTestTemplateosDisk_externalid": {
+            "defaultValue": "/subscriptions/6a1a7290-7f6c-4bc0-ad5c-cfb9321813d3/resourceGroups/UATCDPTestTemplateRG2/providers/Microsoft.Compute/disks/UATCDPVMTestTemplateosDisk",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[parameters('virtualMachines_UATCDPVMTestTemplate_name')]",
+            "location": "eastus2",
+            "tags": {
+                "ProjectID": "TBD",
+                "CostCenterID": "99682"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_D16s_v3"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_UATCDPVMTestTemplate_name'), '-os-disk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "writeAcceleratorEnabled": false,
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": 32
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_UATCDPVMTestTemplate_name')]",
+                    "adminUsername": "kartse",
+                    "adminPassword": "Kartse1234!",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('networkInterfaces_CDPUATNetworkInterface_externalid')]",
+                            "properties": {
+                                "primary": true
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",            
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('virtualMachines_UATCDPVMTestTemplate_name'), '/AzureNetworkWatcherExtension')]",
+            "location": "eastus2",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_UATCDPVMTestTemplate_name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.NetworkWatcher",
+                "type": "NetworkWatcherAgentLinux",
+                "typeHandlerVersion": "1.4"
+            }
+        }
+    ]
+}
